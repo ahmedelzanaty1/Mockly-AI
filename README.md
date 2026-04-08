@@ -44,7 +44,7 @@ Installation
 Clone the repository:
 
 Bash
-git clone https://github.com/your-username/ai-interview-simulator.git
+git clone https://github.com/ahmedelzanaty1/Mockly-AI
 cd ai-interview-simulator
 Install dependencies:
 
