@@ -2,29 +2,35 @@ export const generateInterviewResponse = async (history = [], userData) => {
   const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
   const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
 
+  // لوج للتأكد من وصول البيانات (هتظهر في كونسول المتصفح)
+  console.log("--- Gemini Service Debug ---");
+  console.log("API Key Exists:", !!API_KEY);
+  console.log("User Data Received:", userData);
+
   try {
-    // للتأكد من وصول البيانات
     if (!API_KEY) {
-      console.error("Vercel Check: API Key is missing!");
-      return "API key is missing. Please set VITE_GEMINI_API_KEY in Vercel settings.";
+      return "Error: The API Key is not found in Vercel settings.";
     }
 
+    // التحقق من وجود البيانات المطلوبة
     if (!userData || !userData.jobTitle) {
-      console.error("Context Check: userData is null or incomplete", userData);
-      return "User data is missing. Please restart the setup.";
+      console.error("Validation Failed: userData is incomplete", userData);
+      return "Data Error: Missing user information. Please provide all required details.";
     }
 
     const systemInstruction = `
-You are a professional ${userData.type} interviewer.
-Candidate Name: ${userData.name}
+You are a professional ${userData.type || 'Technical'} interviewer.
+Candidate Name: ${userData.name || 'Candidate'}
 Role: ${userData.jobTitle}
 Job Description: ${userData.jd}
 
 Rules:
-- Ask only ONE short question at a time.
-- Give very brief encouraging feedback before the next question.
-- After 5 questions, provide a final evaluation with Score (X/10), Strengths, and Improvements.
-- Start by welcoming the candidate.
+1. Ask exactly ONE short question at a time.
+2. Provide a very brief feedback on the user's last answer.
+3. After 5 questions, provide a final evaluation with:
+   - Score: X/10
+   - Strengths & Improvements.
+4. Keep the conversation professional and focused.
 `;
 
     const contents = [
@@ -43,20 +49,24 @@ Rules:
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
+        generationConfig: { 
+          temperature: 0.7, 
+          maxOutputTokens: 800 
+        },
       }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      return `API Error: ${error.error?.message || "Unknown error"}`;
+      const errorData = await response.json();
+      console.error("Gemini API Error:", errorData);
+      return `API Error: ${errorData.error?.message || "Something went wrong"}`;
     }
 
     const data = await response.json();
     return data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI.";
 
   } catch (error) {
-    console.error("Fatal Gemini Error:", error);
-    return "Connection error. Please try again.";
+    console.error("Fatal Error:", error);
+    return "error : something went wrong, please try again later.";
   }
 };
