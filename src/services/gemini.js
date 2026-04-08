@@ -1,40 +1,39 @@
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-const BASE_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
 
 export const generateInterviewResponse = async (history = [], userData) => {
+  const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+  const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
+
   try {
-    // 🔥 حماية من crash
     if (!API_KEY) {
-      console.error("API KEY is missing");
-      return "API key is missing.";
+      console.error("Critical Error: VITE_GEMINI_API_KEY is undefined. Check your .env file.");
+      return "Internal Error: API configuration missing.";
     }
 
-    if (!userData) {
-      console.error("userData is missing");
-      return "User data is missing.";
+    if (!userData || !userData.jobTitle) {
+      console.error("userData is missing or incomplete");
+      return "User data is required to start the interview.";
     }
 
-    // 🧠 system prompt (مهم يكون واضح ومختصر)
     const systemInstruction = `
-You are a professional ${userData.type} interviewer for a ${userData.jobTitle} role.
-
-Context (Job Description):
-${userData.jd}
+You are a professional ${userData.type || 'technical'} interviewer.
+Role: ${userData.jobTitle}
+Context (JD): ${userData.jd || 'General professional interview'}
 
 Rules:
-- Ask only ONE short question at a time.
-- Give very brief feedback before next question.
-- After 5 questions, give a final evaluation with score, strengths, and improvements.
-- Stay professional and friendly.
+- Ask only ONE short, relevant question at a time.
+- Provide a very brief feedback (praising or clarifying) before the next question.
+- After exactly 5 questions, provide a final evaluation:
+  * Score: X/10
+  * Strengths: [Bullet points]
+  * Areas for improvement: [Bullet points]
+- Maintain a professional and encouraging tone.
 `;
 
-    // 🔥 مهم: نحط system + history بشكل صحيح
     const contents = [
       {
         role: "user",
-        parts: [{ text: systemInstruction + "\n\nStart the interview." }],
+        parts: [{ text: `System Instructions: ${systemInstruction}\n\nProceed with the interview now.` }],
       },
       ...history.map((msg) => ({
         role: msg.role === "ai" ? "model" : "user",
@@ -51,34 +50,30 @@ Rules:
         contents,
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 300,
+          maxOutputTokens: 500, 
+          topP: 0.9,
         },
       }),
     });
 
-    // ❗ مهم جدًا
     if (!response.ok) {
       const errorData = await response.json();
-      console.error("HTTP ERROR:", errorData);
-      return "API Error: " + (errorData.error?.message || "Unknown error");
+      console.error("Gemini API HTTP Error:", errorData);
+      return `Error: ${errorData.error?.message || "Failed to connect to AI"}`;
     }
 
     const data = await response.json();
+    const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    console.log("Gemini Response:", data);
-
-    // 🔥 حماية من undefined
-    const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!text) {
-      console.error("Empty AI response", data);
-      return "AI returned empty response.";
+    if (!responseText) {
+      console.error("Unexpected API Response Format:", data);
+      return "The AI couldn't generate a response. Please try again.";
     }
 
-    return text;
+    return responseText;
+
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    return "Sorry, I couldn't generate a response.";
+    console.error("Unexpected Error in generateInterviewResponse:", error);
+    return "Something went wrong. Please check your connection.";
   }
 };
