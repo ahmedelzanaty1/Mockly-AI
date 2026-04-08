@@ -1,6 +1,6 @@
 export const generateInterviewResponse = async (history = [], userData) => {
   const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-  const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
+  const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
   // لوج للتأكد من وصول البيانات (هتظهر في كونسول المتصفح)
   console.log("--- Gemini Service Debug ---");
