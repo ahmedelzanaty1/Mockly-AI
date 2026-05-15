@@ -23,8 +23,9 @@ pipeline {
         stage('Build React App') {
             steps {
         sh '''
-            set -o pipefail
-            npm run build 2>&1 | tee build.log
+           #!/bin/bash
+           set -o pipefail
+          npm install 2>&1 | tee npm-install.log
         '''
     }
         }
@@ -47,7 +48,7 @@ pipeline {
                 // 3. نداء الـ API مع هروب علامة الـ $ في الـ shell
                 // استخدمنا ' ' لعنوان الـ URL عشان نمنع Groovy من تفسير أي علامة $
                 sh """
-                curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}" \
+                curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}" \
                 -H "Content-Type: application/json" \
                 -d '{
                     "contents": [{
