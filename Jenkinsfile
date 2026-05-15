@@ -7,14 +7,14 @@ pipeline {
 
     environment {
         GEMINI_API_KEY = credentials('gemini-api-key')
-        DOCKER_IMAGE = "a7medelzanaty/ai-log-demo"
+        DOCKER_IMAGE = "a7medelzanaty/mockly-ai"
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                git 'https://github.com/YOUR_USERNAME/ai-log-demo.git'
+                git 'https://github.com/ahmedelzanaty1/Mockly-AI.git'
             }
         }
 
