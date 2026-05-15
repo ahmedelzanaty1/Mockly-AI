@@ -12,15 +12,21 @@ pipeline {
     stages {
         stage('Install Dependencies') {
             steps {
-                sh 'npm install 2>&1 | tee npm-install.log'
-            }
+        // إضافة set -o pipefail بتخلي الفشل في npm يوقف الـ pipeline
+        sh '''
+            set -o pipefail
+            npm install 2>&1 | tee npm-install.log
+        '''
+    }
         }
 
         stage('Build React App') {
             steps {
-                // تعمدنا الخطأ هنا أو في الكود عشان نجرب الـ AI
-                sh 'npm run build 2>&1 | tee build.log'
-            }
+        sh '''
+            set -o pipefail
+            npm run build 2>&1 | tee build.log
+        '''
+    }
         }
     }
 
