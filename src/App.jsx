@@ -75,7 +75,7 @@ function App() {
         <div className="w-full max-w-2xl h-[85vh] flex flex-col">
           <ProgressBar current={currentStep} total={6} />
           <div className="flex-1 overflow-y-auto my-4 p-4 space-y-4 border border-gray-800 rounded-xl">
-            {messages.map((m, i) => (
+            {messages.map((m, i)(
               <ChatBubble key={i} role={m.role} text={m.text} />
             ))}
             {loading && <p className="text-blue-400 animate-pulse">Thinking...</p>}
