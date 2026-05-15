@@ -12,22 +12,15 @@ pipeline {
     stages {
         stage('Install Dependencies') {
             steps {
-        // إضافة set -o pipefail بتخلي الفشل في npm يوقف الـ pipeline
-        sh '''
-            set -o pipefail
-            npm install 2>&1 | tee npm-install.log
-        '''
-    }
+                // استخدام bash -c بيحل مشكلة pipefail
+                sh 'bash -c "set -o pipefail; npm install 2>&1 | tee npm-install.log"'
+            }
         }
 
         stage('Build React App') {
             steps {
-        sh '''
-           #!/bin/bash
-           set -o pipefail
-          npm install 2>&1 | tee npm-install.log
-        '''
-    }
+                sh 'bash -c "set -o pipefail; npm run build 2>&1 | tee build.log"'
+            }
         }
     }
 
@@ -36,19 +29,18 @@ pipeline {
             script {
                 echo "--- Executing AI Analysis ---"
                 
-                // 1. تجميع الـ logs
+                // 1. تجميع الـ logs بذكاء
                 def combinedLogs = sh(
                     script: "cat npm-install.log build.log 2>/dev/null | tail -n 50 || echo 'No logs available'",
                     returnStdout: true
                 ).trim()
 
-                // 2. تأمين الـ logs من أي علامات تخرب الـ JSON
+                // 2. تنظيف الـ logs تماماً
                 def safeLogs = combinedLogs.replace('"', '\\"').replace('\n', '\\n').replace('\r', '')
 
-                // 3. نداء الـ API مع هروب علامة الـ $ في الـ shell
-                // استخدمنا ' ' لعنوان الـ URL عشان نمنع Groovy من تفسير أي علامة $
+                // 3. نداء الـ API بالموديل الصح والـ URL الصح
                 sh """
-                curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}" \
+                curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}" \
                 -H "Content-Type: application/json" \
                 -d '{
                     "contents": [{
@@ -59,7 +51,7 @@ pipeline {
                 }' > ai_report.json
                 """
 
-                // 4. طباعة التقرير في الـ Console
+                // 4. قراءة الرد وعرضه بشكل واضح
                 def report = readFile('ai_report.json')
                 echo "--- AI ANALYSIS RESULT ---"
                 echo report
